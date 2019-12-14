@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  tide-maker
+
+  SAM Template for tide-maker
+
+Globals:
+  Function:
+    Timeout: 600
+    MemorySize: 256
+
+Resources:
+
+  H5Layer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: h5-lib-layer
+      ContentUri: 'dependencies/'
+      RetentionPolicy: Retain
+      CompatibleRuntimes:
+        - python3.7
+
+  mapgetretriever:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: map_get_retriever.lambda_handler
+      Runtime: python3.8
+      CodeUri: functions/map_get_retriever.py
+      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /map
+            Method: GET
+
+  h5extract:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: h5_extract.lambda_handler
+      Runtime: python3.7
+      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      CodeUri: functions/h5_extract.py
+      Description: ''
+      Layers: 
+        - !Ref H5Layer
+      Events:
+        BucketEvent1:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket1
+            Events:
+              - 's3:ObjectCreated:*'
+
+  streamlinesprocessor:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: s111_to_streamlines.lambda_handler
+      Runtime: python3.7
+      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      CodeUri: functions/s111_to_streamlines.py
+      Description: ''
+      Layers: 
+        - !Ref H5Layer
+      Events:
+        BucketEvent2:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket2
+            Events:
+              - 's3:ObjectCreated:*'
+
+  Bucket1:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: "bait-bucket-1"
+
+  Bucket2:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: "groups-bucket-1"
+
+  Bucket3:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: "geojson-bucket-1"

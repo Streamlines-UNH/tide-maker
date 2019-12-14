@@ -1,0 +1,20 @@
+version: 0.2
+
+env:
+    variables:
+        BUCKET: lambda-deploy-artifacts-sbsc
+phases:
+    install:
+        runtime-versions:
+            python: 3.7
+        commands:
+            - pip3 install -r functions/requirements.txt
+    build:
+        commands:
+            - aws cloudformation package --template-file template.yaml --s3-bucket $BUCKET --output-template-file outputtemplate.yaml
+artifacts:
+    type: zip
+    files:
+        - template.yaml
+        - outputtemplate.yaml
+
