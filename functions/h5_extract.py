@@ -3,6 +3,7 @@ import io
 import os
 import h5py
 
+BUCKET = os.getenv('BUCKET_DEST')
 
 def split_groups(dataset, pre):
     surf_cur_group = dataset["SurfaceCurrent"]
@@ -26,7 +27,7 @@ def split_groups(dataset, pre):
 
             s3c = boto3.client("s3")
             s3c.put_object(
-                    Bucket="groups-bucket-1", Key=outfile, Body=fp.getvalue())
+                    Bucket=BUCKET, Key=outfile, Body=fp.getvalue())
 
 
 def lambda_handler(event, context):

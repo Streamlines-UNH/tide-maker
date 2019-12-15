@@ -4,12 +4,13 @@ import boto3
 # Boto S3 Client used to access buckets
 s3_client = boto3.client('s3')
 
+BUCKET = os.getenv('BUCKET_DEST')
 
 def lambda_handler(event, context):
 
     # Hardcoded to temporarily grab this file to render inital web-app map
     response = s3_client.get_object(
-        Bucket='geojson-cbsc',
+        Bucket=BUCKET,
         Key='S111US_20191023T17Z_NYOFS_TYP2.geojson'
     )
     

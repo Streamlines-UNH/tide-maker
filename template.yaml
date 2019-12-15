@@ -10,6 +10,11 @@ Globals:
     Timeout: 600
     MemorySize: 256
 
+Parameters:
+    BUCKETPRE:
+      Description: "Prefix for stack buckets"
+      Type: "String"
+
 Resources:
 
   H5Layer:
@@ -28,6 +33,10 @@ Resources:
       Runtime: python3.8
       CodeUri: functions/map_get_retriever.py
       Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Variables:
+        BUCKET_DEST: !Sub
+          - ${PRE}geojson-bucket-1
+          - { Pre: !Ref BUCKETPRE }
       Events:
         Api1:
           Type: Api
@@ -45,6 +54,10 @@ Resources:
       Description: ''
       Layers: 
         - !Ref H5Layer
+      Variables:
+        BUCKET_DEST: !Sub
+          - ${PRE}groups-bucket-1
+          - { Pre: !Ref BUCKETPRE }
       Events:
         BucketEvent1:
           Type: S3
@@ -62,6 +75,10 @@ Resources:
       Role: 'arn:aws:iam::659933455233:role/testing_role'
       CodeUri: functions/s111_to_streamlines.py
       Description: ''
+      Variables:
+        BUCKET_DEST: !Sub
+          - ${PRE}geojson-bucket-1
+          - { Pre: !Ref BUCKETPRE }
       Layers: 
         - !Ref H5Layer
       Events:
@@ -76,14 +93,20 @@ Resources:
   Bucket1:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: "bait-bucket-1"
+      BucketName: !Sub
+        - ${PRE}bait-bucket-1
+        - { Pre: !Ref BUCKETPRE }
 
   Bucket2:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: "groups-bucket-1"
+      BucketName: !Sub
+        - ${PRE}groups-bucket-1
+        - { Pre: !Ref BUCKETPRE }
 
   Bucket3:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: "geojson-bucket-1"
+      BucketName: !Sub
+        - ${PRE}geojson-bucket-1
+        - { Pre: !Ref BUCKETPRE }

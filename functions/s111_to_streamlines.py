@@ -13,6 +13,7 @@ import glob
 import h5py
 import dateutil.parser
 
+BUCKET = os.getenv('BUCKET_DEST')
 EARTH_RADIUS = 6371000.0
 logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s",
@@ -924,7 +925,7 @@ def lambda_handler(event, context):
 
     s3c = boto3.client("s3")
     s3c.put_object(
-        Bucket="geojson-bucket-1",
+        Bucket=BUCKET,
         Key=output_file,
         Body=streamlines.encode("utf8")
     )
