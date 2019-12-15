@@ -11,8 +11,6 @@ phases:
             - pip3 install -r functions/requirements.txt
     build:
         commands:
-            - export GIT_BRANCH="$(git symbolic-ref HEAD --short 2>/dev/null)"
-            - export PREFIX=`if [ "$GIT_BRANCH" == "dev" ]; then echo "dev-"; else echo ""; fi`
             - aws cloudformation package --template-file template.yaml --s3-bucket $BUCKET --output-template-file outputtemplate.yaml
 artifacts:
     type: zip
