@@ -3,7 +3,11 @@ import io
 import os
 import h5py
 
-BUCKET = os.getenv('BUCKET_DEST')
+TABLE = os.getenv('DATA_DEST')
+dynamodb = boto3.client('dynamodb', endpoint_url='http://localhost:8000')
+s3 = boto3.client("s3")
+table = dynamodb.Table(TABLE)
+
 
 def split_groups(dataset, pre):
     surf_cur_group = dataset["SurfaceCurrent"]
@@ -23,21 +27,28 @@ def split_groups(dataset, pre):
                 for x in data[name].attrs:
                     h5f[name].attrs[x] = data[name].attrs[x]
                 h5f.close()
-            outfile = pre + "/" + name + ".h5"
 
-            s3c = boto3.client("s3")
-            s3c.put_object(
-                    Bucket=BUCKET, Key=outfile, Body=fp.getvalue())
+            outfile = pre + "_" + name
+
+            dynamodb.put_item(
+                TableName=TABLE,
+                Item={
+                    'group_name': {
+                        "S": outfile
+                    },
+                    'data': {
+                        "B": fp.getvalue()
+                    }
+                })
 
 
 def lambda_handler(event, context):
 
     bucket = event["Records"][0]["s3"]["bucket"]["name"]
     infile = event["Records"][0]["s3"]["object"]["key"]
-    s3 = boto3.resource("s3")
 
-    obj = s3.Object(bucket, infile)
-    body = obj.get()["Body"].read()
+    obj = s3.get_object(Bucket=bucket, Key=infile)
+    body = obj["Body"].read()
     data = io.BytesIO()
     data.write(body)
 

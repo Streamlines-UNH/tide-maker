@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-
-import argparse
 import math
 import json
 import logging
 import time
 import boto3
-import os
-import os.path
 import io
-import glob
+import os
 import h5py
 import dateutil.parser
 
+DATA_TABLE = os.getenv('DATA_DEST')
 EARTH_RADIUS = 6371000.0
 logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s",
@@ -876,7 +873,7 @@ def process_request_geojson(dataset):
         data = process_one(key, dataset)
         geojson_dict = {"type": "FeatureCollection", "features": []}
         bounds = Bounds()
-         for sl in data["streamlines"]:
+        for sl in data["streamlines"]:
             sl_geojson = {
                 "type": "Feature",
                 "geometry": {"type": "LineString", "coordinates": []},
@@ -906,23 +903,28 @@ def process_request_geojson(dataset):
 
 
 def lambda_handler(event, context):
-    body = bytes.fromhex(event["Records"][0]["dynamodb"]["NewImage"]["data"]["S"])
+    body = bytes.fromhex(
+        event["Records"][0]["dynamodb"]["NewImage"]["data"]["S"]
+    )
     data = io.BytesIO()
     data.write(body)
-    
+
     key = event["Records"][0]["dynamodb"]["Keys"]["group_name"]["S"]
 
     dataset = h5py.File(data, 'r')
     streamlines = process_request_geojson(dataset)
 
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('streamlines')
-    table.put_item(
+    dynamodb = boto3.client('dynamodb')
+    dynamodb.put_item(
+        TableName=DATA_TABLE,
         Item={
-            'group_name': key,
-            'data': streamlines
-        }
-    )
+            'group_name': {
+                "S": key
+            },
+            'data': {
+                "S": streamlines
+            }
+        })
 
     return {
         'statusCode': 200,
