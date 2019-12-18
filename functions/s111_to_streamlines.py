@@ -13,7 +13,6 @@ import glob
 import h5py
 import dateutil.parser
 
-BUCKET = os.getenv('BUCKET_DEST')
 EARTH_RADIUS = 6371000.0
 logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s",
@@ -860,7 +859,7 @@ def process_one(group_name, groups):
         b = sl.bounds
         bounds.add(b.min)
         bounds.add(b.max)
-        dataset.append(sl.asDict())
+        dataset.append(sl)
 
     streamlines["bounds"] = bounds.asDict()
     streamlines["streamlines"] = dataset
@@ -877,14 +876,14 @@ def process_request_geojson(dataset):
         data = process_one(key, dataset)
         geojson_dict = {"type": "FeatureCollection", "features": []}
         bounds = Bounds()
-        for sl in data:
+         for sl in data["streamlines"]:
             sl_geojson = {
                 "type": "Feature",
                 "geometry": {"type": "LineString", "coordinates": []},
                 "properties": {
                     "index": sl.index,
                     "streamline_level": sl.level,
-                    "seed_index": sl.seedIndex,
+                    "seed_index": sl.seed_index,
                     "points_levels": [],
                     "magnitudes": [],
                     "directions": [],
@@ -907,27 +906,25 @@ def process_request_geojson(dataset):
 
 
 def lambda_handler(event, context):
-    bucket = event["Records"][0]["s3"]["bucket"]["name"]
-    infile = event["Records"][0]["s3"]["object"]["key"]
-    s3 = boto3.resource("s3")
-
-    obj = s3.Object(bucket, infile)
-    body = obj.get()["Body"].read()
+    body = bytes.fromhex(event["Records"][0]["dynamodb"]["NewImage"]["data"]["S"])
     data = io.BytesIO()
     data.write(body)
+    
+    key = event["Records"][0]["dynamodb"]["Keys"]["group_name"]["S"]
 
-    pre, _ = os.path.splitext(infile)
-    folder = pre[: pre.rindex("/")]
-    output_file = folder + "/" + pre[1 + pre.rindex("/"):] + ".json"
-
-    dataset = h5py.File(data, "r")
+    dataset = h5py.File(data, 'r')
     streamlines = process_request_geojson(dataset)
 
-    s3c = boto3.client("s3")
-    s3c.put_object(
-        Bucket=BUCKET,
-        Key=output_file,
-        Body=streamlines.encode("utf8")
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('streamlines')
+    table.put_item(
+        Item={
+            'group_name': key,
+            'data': streamlines
+        }
     )
 
-    return {"statusCode": 200, "body": json.dumps(EARTH_RADIUS)}
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Hello from Lambda!')
+    }

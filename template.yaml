@@ -79,9 +79,10 @@ Resources:
       Description: ''
       Environment:
         Variables:
-          BUCKET_DEST: !Sub
-            - ${PRE}geojson-bucket-1
-            - { PRE: !Ref BUCKETPRE }
+          DATA_DEST: 
+          'Fn::GetAtt':
+            - Table2
+            - Arn
       Layers: 
         - !Ref H5Layer
       Events:
@@ -100,16 +101,33 @@ Resources:
         - ${PRE}bait-bucket-1
         - { PRE: !Ref BUCKETPRE }
 
-  Bucket2:
-    Type: 'AWS::S3::Bucket'
+  Table1:
+    Type: 'AWS::DynamoDB::Table'
     Properties:
-      BucketName: !Sub
-        - ${PRE}groups-bucket-1
-        - { PRE: !Ref BUCKETPRE }
+      AttributeDefinitions:
+        - AttributeName: group_name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: group_name
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
-  Bucket3:
-    Type: 'AWS::S3::Bucket'
+  Table2:
+    Type: 'AWS::DynamoDB::Table'
     Properties:
-      BucketName: !Sub
-        - ${PRE}geojson-bucket-1
-        - { PRE: !Ref BUCKETPRE }
+      AttributeDefinitions:
+        - AttributeName: group_name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
