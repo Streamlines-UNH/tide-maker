@@ -21,35 +21,23 @@ Resources:
       CompatibleRuntimes:
         - python3.7
 
-  mapgetretriever:
-    Type: 'AWS::Serverless::Function'
-    Properties:
-      Handler: map_get_retriever.lambda_handler
-      Runtime: python3.8
-      CodeUri: functions/map_get_retriever/
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
-      Environment:
-        Variables:
-          DATA_SRC: !GetAtt Table3.TableName
-      Events:
-        Api1:
-          Type: Api
-          Properties:
-            Path: /map
-            Method: GET
-
   h5query:
     Type: 'AWS::Serverless::Function'
     Properties:
-      Handler: h5_quary.lambda_handler
+      Handler: h5_query.lambda_handler
       Runtime: python3.7
       Role: 'arn:aws:iam::659933455233:role/testing_role'
       CodeUri: functions/h5_query/
       Description: ''
       Environment:
         Variables:
-          TIME_TABLE: !GetAtt Table4.TableName
-          DATA_BUCKET: !GetAtt Bucket1.BucketName
+          TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
+          DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket1.Arn]]
+      Events:
+        Schedule1:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 * ? * * *)
 
   h5extract:
     Type: 'AWS::Serverless::Function'
@@ -63,7 +51,7 @@ Resources:
         - !Ref H5Layer
       Environment:
         Variables:
-          DATA_DEST: !GetAtt Table1.TableName
+          DATA_DEST: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
       Events:
         BucketEvent1:
           Type: S3
@@ -83,67 +71,49 @@ Resources:
       Description: ''
       Environment:
         Variables:
-          DATA_DEST: !GetAtt Table2.TableName
+          DATA_DEST: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
       Layers: 
         - !Ref H5Layer
       Events:
-        DynamoDB1:
-          Type: DynamoDB
+        BucketEvent2:
+          Type: S3
           Properties:
-            Stream:
-              !GetAtt Table1.StreamArn
-            StartingPosition: TRIM_HORIZON
-            BatchSize: 1
+            Bucket:
+              Ref: Bucket2
+            Events:
+              - 's3:ObjectCreated:*'
 
+  mapgetretriever:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: map_get_retriever.lambda_handler
+      Runtime: python3.8
+      CodeUri: functions/map_get_retriever/
+      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Environment:
+        Variables:
+          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /map
+            Method: GET
+
+  # h5query -> h5extract
+  Bucket1:
+    Type: 'AWS::S3::Bucket'
+  # h5extract -> streamlinesprocessor
+  Bucket2:
+    Type: 'AWS::S3::Bucket'
+  # streamlinesprocessor -> mapgetretriever
+  Bucket3:
+    Type: 'AWS::S3::Bucket'
+  # h5query timestamps
   Table1:
     Type: 'AWS::DynamoDB::Table'
     Properties:
       AttributeDefinitions:
-        - AttributeName: group_name
-          AttributeType: S
-      KeySchema:
-        - AttributeName: group_name
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
-
-  Table2:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: group_name
-          AttributeType: S
-      KeySchema:
-        - AttributeName: group_name
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
-
-  Table3:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: source_name
-          AttributeType: S
-      KeySchema:
-        - AttributeName: source_name
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
-
-  Table4:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      AttributeDefinitions:
         - AttributeName: dataset
           AttributeType: S
       KeySchema:
@@ -155,5 +125,3 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_IMAGE
 
-  Bucket1:
-    Type: 'AWS::S3::Bucket'

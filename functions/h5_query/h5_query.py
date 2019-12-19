@@ -15,7 +15,7 @@ FILE_RE = re.compile(
     r".*((\d\d:\d\d)(AM|PM))[\ 0-9A-Z_]*Z_(.*)_TYP2(_PACIFIC|_ATLANTIC)?\.h5"
 )
 
-dynamodb = boto3.client('dynamodb', endpoint_url='http://localhost:8000')
+dynamodb = boto3.client('dynamodb')
 s3 = boto3.client("s3")
 
 
@@ -68,7 +68,7 @@ def get_lastest():
                             "S": data_short
                         },
                         'last_updated': {
-                            "S": data_time.timestamp()
+                            "S": str(data_time.timestamp())
                         }
                     })
 

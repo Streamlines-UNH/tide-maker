@@ -9,13 +9,14 @@ import os
 import h5py
 import dateutil.parser
 
-DATA_TABLE = os.getenv('DATA_DEST')
+DATA_DEST = os.getenv('DATA_DEST')
 EARTH_RADIUS = 6371000.0
 logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s",
     datefmt="%m/%d/%Y %H:%M:%S",
     level=logging.INFO,
 )
+s3 = boto3.client("s3")
 
 
 class Streamline:
@@ -903,28 +904,23 @@ def process_request_geojson(dataset):
 
 
 def lambda_handler(event, context):
-    body = bytes.fromhex(
-        event["Records"][0]["dynamodb"]["NewImage"]["data"]["S"]
-    )
+    bucket = event["Records"][0]["s3"]["bucket"]["name"]
+    infile = event["Records"][0]["s3"]["object"]["key"]
+
+    obj = s3.get_object(Bucket=bucket, Key=infile)
+    body = obj["Body"].read()
     data = io.BytesIO()
     data.write(body)
 
-    key = event["Records"][0]["dynamodb"]["Keys"]["group_name"]["S"]
+    outfile = infile + ".geojson"
 
     dataset = h5py.File(data, 'r')
     streamlines = process_request_geojson(dataset)
 
-    dynamodb = boto3.client('dynamodb')
-    dynamodb.put_item(
-        TableName=DATA_TABLE,
-        Item={
-            'group_name': {
-                "S": key
-            },
-            'data': {
-                "S": streamlines
-            }
-        })
+    s3.put_object(
+        Bucket=DATA_DEST,
+        Key=outfile,
+        Body=streamlines.encode("utf-8"))
 
     return {
         'statusCode': 200,

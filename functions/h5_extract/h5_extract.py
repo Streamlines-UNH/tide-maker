@@ -3,10 +3,9 @@ import io
 import os
 import h5py
 
-TABLE = os.getenv('DATA_DEST')
-dynamodb = boto3.client('dynamodb', endpoint_url='http://localhost:8000')
+DATA_DEST = os.getenv('DATA_DEST')
+dynamodb = boto3.client('dynamodb')
 s3 = boto3.client("s3")
-table = dynamodb.Table(TABLE)
 
 
 def split_groups(dataset, pre):
@@ -28,18 +27,12 @@ def split_groups(dataset, pre):
                     h5f[name].attrs[x] = data[name].attrs[x]
                 h5f.close()
 
-            outfile = pre + "_" + name
+            outfile = pre + "/" + name
 
-            dynamodb.put_item(
-                TableName=TABLE,
-                Item={
-                    'group_name': {
-                        "S": outfile
-                    },
-                    'data': {
-                        "B": fp.getvalue()
-                    }
-                })
+            s3.put_object(
+                Bucket=DATA_BUCKET,
+                Key=outfile,
+                Body=fp.getvalue())
 
 
 def lambda_handler(event, context):
