@@ -30,11 +30,13 @@ def get_lastest():
 
         def check_file(x):
             res = FILE_RE.match(x)
-            if res is None:
-                return
-            checked_files.append(x)
+            if res is not None:
+                checked_files.append(x)
+        
+        ftp.cwd(region)
+        ftp.retrlines('LIST', callback=check_file)
+        ftp.cwd("..")
 
-        ftp.retrlines('LIST ' + region, callback=check_file)
         for x in checked_files:
             res = FILE_RE.match(x)
             data_short = res.group(4)
@@ -77,3 +79,4 @@ def lambda_handler(event, context):
 
     get_lastest()
     return {"statusCode": 200, "body": "Complete"}
+

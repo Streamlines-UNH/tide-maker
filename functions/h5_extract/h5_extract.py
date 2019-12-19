@@ -30,7 +30,7 @@ def split_groups(dataset, pre):
             outfile = pre + "/" + name
 
             s3.put_object(
-                Bucket=DATA_BUCKET,
+                Bucket=DATA_DEST,
                 Key=outfile,
                 Body=fp.getvalue())
 

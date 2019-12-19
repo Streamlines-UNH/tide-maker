@@ -915,6 +915,7 @@ def lambda_handler(event, context):
     outfile = infile + ".geojson"
 
     dataset = h5py.File(data, 'r')
+    print("Processing:", infile)
     streamlines = process_request_geojson(dataset)
 
     s3.put_object(
