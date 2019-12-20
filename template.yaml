@@ -16,7 +16,15 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: h5-lib-layer
-      ContentUri: 'dependencies/'
+      ContentUri: 'dependencies/h5_layer'
+      RetentionPolicy: Retain
+      CompatibleRuntimes:
+        - python3.7
+  StreamlineCpp:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: streamlines-exec-layer
+      ContentUri: 'dependencies/s111_layer'
       RetentionPolicy: Retain
       CompatibleRuntimes:
         - python3.7
@@ -51,7 +59,7 @@ Resources:
         - !Ref H5Layer
       Environment:
         Variables:
-          DATA_DEST: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
+          UPDATE_TABLE: !Select [1, !Split ["/", !GetAtt Table2.Arn]]
       Events:
         BucketEvent1:
           Type: S3
@@ -64,24 +72,25 @@ Resources:
   streamlinesprocessor:
     Type: 'AWS::Serverless::Function'
     Properties:
-      Handler: s111_to_streamlines.lambda_handler
+      Handler: s111_manager.lambda_handler
       Runtime: python3.7
       Role: 'arn:aws:iam::659933455233:role/testing_role'
       CodeUri: functions/s111_to_streamlines/
       Description: ''
       Environment:
         Variables:
-          DATA_DEST: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
+          DATA_DEST: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
       Layers: 
         - !Ref H5Layer
+        - !Ref StreamlineCpp
       Events:
-        BucketEvent2:
-          Type: S3
+        DynamoDB1:
+          Type: DynamoDB
           Properties:
-            Bucket:
-              Ref: Bucket2
-            Events:
-              - 's3:ObjectCreated:*'
+            Stream:
+              !GetAtt Table2.StreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 1
 
   mapgetretriever:
     Type: 'AWS::Serverless::Function'
@@ -92,7 +101,7 @@ Resources:
       Role: 'arn:aws:iam::659933455233:role/testing_role'
       Environment:
         Variables:
-          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
+          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
       Events:
         Api1:
           Type: Api
@@ -103,11 +112,8 @@ Resources:
   # h5query -> h5extract
   Bucket1:
     Type: 'AWS::S3::Bucket'
-  # h5extract -> streamlinesprocessor
-  Bucket2:
-    Type: 'AWS::S3::Bucket'
   # streamlinesprocessor -> mapgetretriever
-  Bucket3:
+  Bucket2:
     Type: 'AWS::S3::Bucket'
   # h5query timestamps
   Table1:
@@ -124,4 +130,18 @@ Resources:
         WriteCapacityUnits: 5
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-
+  # streamlinesprocessor trigger
+  Table2:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: key_name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: key_name
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE

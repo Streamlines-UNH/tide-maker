@@ -2,13 +2,14 @@ import boto3
 import io
 import os
 import h5py
+import time
 
-DATA_DEST = os.getenv('DATA_DEST')
+DATA_DEST = os.getenv('UPDATE_TABLE')
 dynamodb = boto3.client('dynamodb')
 s3 = boto3.client("s3")
 
 
-def split_groups(dataset, pre):
+def split_groups(dataset, infile, bucket):
     surf_cur_group = dataset["SurfaceCurrent"]
     for key in surf_cur_group:
         if key == "axisNames":
@@ -17,22 +18,17 @@ def split_groups(dataset, pre):
         for name in data:
             if name == "uncertainty":
                 continue
-            fp = io.BytesIO()
-            with h5py.File(fp, "r+") as h5f:
-                gr = h5f.create_group(name)
-                gr.create_dataset("values", data=data[name]["values"])
-                for x in data.attrs:
-                    h5f.attrs[x] = data.attrs[x]
-                for x in data[name].attrs:
-                    h5f[name].attrs[x] = data[name].attrs[x]
-                h5f.close()
-
-            outfile = pre + "/" + name
-
-            s3.put_object(
-                Bucket=DATA_DEST,
-                Key=outfile,
-                Body=fp.getvalue())
+            data_path = "%s/%s/%s" % (bucket, infile, name)
+            dynamodb.put_item(
+                TableName=DATA_DEST,
+                Item={
+                    'key_name': {
+                        "S": data_path
+                    },
+                    'ts': {
+                        "S": str(time.time())
+                    }
+                })
 
 
 def lambda_handler(event, context):
@@ -45,10 +41,8 @@ def lambda_handler(event, context):
     data = io.BytesIO()
     data.write(body)
 
-    pre, _ = os.path.splitext(infile)
-
     dataset = h5py.File(data, "r")
 
-    split_groups(dataset, pre)
+    split_groups(dataset, infile, bucket)
 
     return {"statusCode": 200, "body": "Complete"}
