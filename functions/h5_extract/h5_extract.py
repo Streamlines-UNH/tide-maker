@@ -2,11 +2,10 @@ import boto3
 import io
 import os
 import h5py
-import time
 
-DATA_DEST = os.getenv('UPDATE_TABLE')
-dynamodb = boto3.client('dynamodb')
+SNS_TOPIC = os.getenv('SNS_TOPIC')
 s3 = boto3.client("s3")
+sns = boto3.client('sns')
 
 
 def split_groups(dataset, infile, bucket):
@@ -19,16 +18,10 @@ def split_groups(dataset, infile, bucket):
             if name == "uncertainty":
                 continue
             data_path = "%s/%s/%s" % (bucket, infile, name)
-            dynamodb.put_item(
-                TableName=DATA_DEST,
-                Item={
-                    'key_name': {
-                        "S": data_path
-                    },
-                    'ts': {
-                        "S": str(time.time())
-                    }
-                })
+            sns.publish(
+                TargetArn=SNS_TOPIC,
+                Message=data_path
+            )
 
 
 def lambda_handler(event, context):

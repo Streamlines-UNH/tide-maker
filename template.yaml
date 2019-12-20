@@ -7,8 +7,8 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 600
-    MemorySize: 256
+    Timeout: 900
+    MemorySize: 512
 
 Resources:
 
@@ -59,7 +59,7 @@ Resources:
         - !Ref H5Layer
       Environment:
         Variables:
-          UPDATE_TABLE: !Select [1, !Split ["/", !GetAtt Table2.Arn]]
+          SNS_TOPIC: !Ref SNSTopic1
       Events:
         BucketEvent1:
           Type: S3
@@ -84,13 +84,11 @@ Resources:
         - !Ref H5Layer
         - !Ref StreamlineCpp
       Events:
-        DynamoDB1:
-          Type: DynamoDB
+        SNS1:
+          Type: SNS
           Properties:
-            Stream:
-              !GetAtt Table2.StreamArn
-            StartingPosition: TRIM_HORIZON
-            BatchSize: 1
+            Topic:
+              Ref: SNSTopic1
 
   mapgetretriever:
     Type: 'AWS::Serverless::Function'
@@ -131,17 +129,5 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_IMAGE
   # streamlinesprocessor trigger
-  Table2:
-    Type: 'AWS::DynamoDB::Table'
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: key_name
-          AttributeType: S
-      KeySchema:
-        - AttributeName: key_name
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
+  SNSTopic1:
+    Type: 'AWS::SNS::Topic'

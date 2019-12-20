@@ -2,6 +2,7 @@ import subprocess
 import json
 import os
 import boto3
+import time
 
 DATA_DEST = os.getenv('DATA_DEST')
 s3 = boto3.client("s3")
@@ -19,7 +20,7 @@ def run_s111(name, group):
 
 def lambda_handler(event, context):
 
-    data_path = event["Records"][0]["dynamodb"]["NewImage"]["key_name"]["S"].split("/")
+    data_path = event["Records"][0]["Sns"]["Message"].split("/")
     print(data_path)
     bucket = data_path[0]
     infile = data_path[1]
