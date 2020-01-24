@@ -7,8 +7,8 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 600
-    MemorySize: 256
+    Timeout: 900
+    MemorySize: 512
 
 Resources:
 
@@ -16,35 +16,59 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: h5-lib-layer
-      ContentUri: 'dependencies/'
+      ContentUri: 'dependencies/h5_layer'
+      RetentionPolicy: Retain
+      CompatibleRuntimes:
+        - python3.7
+  StreamlineCpp:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: streamlines-exec-layer
+      ContentUri: 'dependencies/s111_layer'
       RetentionPolicy: Retain
       CompatibleRuntimes:
         - python3.7
 
-  mapgetretriever:
+  TippeCanoeLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: tippecanoe-exec-layer
+      ContentUri: 'dependencies/tippecanoe_layer'
+      RetentionPolicy: Retain
+      CompatibleRuntimes:
+        - python3.7
+
+  h5query:
     Type: 'AWS::Serverless::Function'
     Properties:
-      Handler: map_get_retriever.lambda_handler
-      Runtime: python3.8
-      CodeUri: functions/map_get_retriever.py
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Handler: h5_query.lambda_handler
+      Runtime: python3.7
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      CodeUri: functions/h5_query/
+      Description: ''
+      Environment:
+        Variables:
+          TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
+          DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket1.Arn]]
       Events:
-        Api1:
-          Type: Api
+        Schedule1:
+          Type: Schedule
           Properties:
-            Path: /map
-            Method: GET
+            Schedule: cron(0 * ? * * *)
 
   h5extract:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: h5_extract.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
-      CodeUri: functions/h5_extract.py
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      CodeUri: functions/h5_extract/
       Description: ''
       Layers: 
         - !Ref H5Layer
+      Environment:
+        Variables:
+          SNS_TOPIC: !Ref SNSTopic1
       Events:
         BucketEvent1:
           Type: S3
@@ -57,33 +81,62 @@ Resources:
   streamlinesprocessor:
     Type: 'AWS::Serverless::Function'
     Properties:
-      Handler: s111_to_streamlines.lambda_handler
+      Handler: s111_manager.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
-      CodeUri: functions/s111_to_streamlines.py
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      CodeUri: functions/s111_to_streamlines/
       Description: ''
+      Environment:
+        Variables:
+          DATA_DEST: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
       Layers: 
         - !Ref H5Layer
+        - !Ref StreamlineCpp
       Events:
-        BucketEvent2:
-          Type: S3
+        SNS1:
+          Type: SNS
           Properties:
-            Bucket:
-              Ref: Bucket2
-            Events:
-              - 's3:ObjectCreated:*'
+            Topic:
+              Ref: SNSTopic1
 
+  mapgetretriever:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: map_get_retriever.lambda_handler
+      Runtime: python3.8
+      CodeUri: functions/map_get_retriever/
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      Environment:
+        Variables:
+          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: /map
+            Method: GET
+
+  # h5query -> h5extract
   Bucket1:
     Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: "bait-bucket-1"
-
+  # streamlinesprocessor -> mapgetretriever
   Bucket2:
     Type: 'AWS::S3::Bucket'
+  # h5query timestamps
+  Table1:
+    Type: 'AWS::DynamoDB::Table'
     Properties:
-      BucketName: "groups-bucket-1"
-
-  Bucket3:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: "geojson-bucket-1"
+      AttributeDefinitions:
+        - AttributeName: dataset
+          AttributeType: S
+      KeySchema:
+        - AttributeName: dataset
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  # streamlinesprocessor trigger
+  SNSTopic1:
+    Type: 'AWS::SNS::Topic'

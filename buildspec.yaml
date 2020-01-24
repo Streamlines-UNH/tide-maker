@@ -2,7 +2,7 @@ version: 0.2
 
 env:
     variables:
-        BUCKET: lambda-deploy-artifacts-sbsc
+            BUCKET: lambda-deployment-artifacts-unh
 phases:
     install:
         runtime-versions:
@@ -17,4 +17,3 @@ artifacts:
     files:
         - template.yaml
         - outputtemplate.yaml
-
