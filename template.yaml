@@ -29,12 +29,21 @@ Resources:
       CompatibleRuntimes:
         - python3.7
 
+  TippeCanoeLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: tippecanie-exec-layer
+      ContentUri: 'dependencies/tippecanoe_layer'
+      RetentionPolicy: Retain
+      CompatibleRuntimes:
+        - python3.7
+
   h5query:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: h5_query.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
       CodeUri: functions/h5_query/
       Description: ''
       Environment:
@@ -52,7 +61,7 @@ Resources:
     Properties:
       Handler: h5_extract.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
       CodeUri: functions/h5_extract/
       Description: ''
       Layers: 
@@ -74,7 +83,7 @@ Resources:
     Properties:
       Handler: s111_manager.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
       CodeUri: functions/s111_to_streamlines/
       Description: ''
       Environment:
@@ -96,7 +105,7 @@ Resources:
       Handler: map_get_retriever.lambda_handler
       Runtime: python3.8
       CodeUri: functions/map_get_retriever/
-      Role: 'arn:aws:iam::659933455233:role/testing_role'
+      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
       Environment:
         Variables:
           DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
