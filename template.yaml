@@ -98,7 +98,8 @@ Resources:
           Properties:
             Topic:
               Ref: SNSTopic1
-  testapifunc:
+
+  tileapifunction:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: tile_api_function.lambda_handler
@@ -106,6 +107,13 @@ Resources:
       Role: 'arn:aws:iam::958555546010:role/data_etl_lambda_role'
       CodeUri: functions/tile_api_function/
       Description: ''
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            Path: '/api/{region}/{z}/{x}/{y}'
+            Method: GET
+
 
   mapgetretriever:
     Type: 'AWS::Serverless::Function'
@@ -118,7 +126,7 @@ Resources:
         Variables:
           DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
       Events:
-        Api1:
+        Api2:
           Type: Api
           Properties:
             Path: /map
