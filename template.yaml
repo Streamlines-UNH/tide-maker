@@ -43,7 +43,7 @@ Resources:
     Properties:
       Handler: h5_query.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
       CodeUri: functions/h5_query/
       Description: ''
       Environment:
@@ -61,7 +61,7 @@ Resources:
     Properties:
       Handler: h5_extract.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
       CodeUri: functions/h5_extract/
       Description: ''
       Layers: 
@@ -83,7 +83,7 @@ Resources:
     Properties:
       Handler: s111_manager.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
       CodeUri: functions/s111_to_streamlines/
       Description: ''
       Environment:
@@ -105,7 +105,7 @@ Resources:
       Handler: map_get_retriever.lambda_handler
       Runtime: python3.8
       CodeUri: functions/map_get_retriever/
-      Role: 'arn:aws:iam::958555546010:role/aws-cloudformation-role'
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
       Environment:
         Variables:
           DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
