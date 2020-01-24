@@ -32,7 +32,7 @@ Resources:
   TippeCanoeLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: tippecanie-exec-layer
+      LayerName: tippecanoe-exec-layer
       ContentUri: 'dependencies/tippecanoe_layer'
       RetentionPolicy: Retain
       CompatibleRuntimes:

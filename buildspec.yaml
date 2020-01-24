@@ -2,7 +2,7 @@ version: 0.2
 
 env:
     variables:
-        BUCKET: lambda-deploy-artifacts-sbsc
+            BUCKET: codepipeline-us-east-1-864038731613
 phases:
     install:
         runtime-versions:
