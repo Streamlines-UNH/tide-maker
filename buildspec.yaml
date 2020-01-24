@@ -2,7 +2,7 @@ version: 0.2
 
 env:
     variables:
-            BUCKET: codepipeline-us-east-1-864038731613
+            BUCKET: lambda-deployment-artifacts-unh
 phases:
     install:
         runtime-versions:
