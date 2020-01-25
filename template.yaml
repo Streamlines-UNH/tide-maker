@@ -56,6 +56,29 @@ Resources:
           Properties:
             Schedule: cron(0 * ? * * *)
 
+
+  json2mvt:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: json2mvt.lambda_handler
+      Runtime: python3.7
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      CodeUri: functions/json2mvt/
+      Description: ''
+      Environment:
+        Variables:
+          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
+      Layers:
+        - !Ref TippeCanoeLayer
+      Events:
+        BucketEvent1:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket2
+            Events:
+              - 's3:ObjectCreated:*'
+
   h5extract:
     Type: 'AWS::Serverless::Function'
     Properties:
