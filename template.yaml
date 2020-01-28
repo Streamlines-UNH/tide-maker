@@ -71,7 +71,7 @@ Resources:
       Layers:
         - !Ref TippeCanoeLayer
       Events:
-        BucketEvent1:
+        BucketEvent2:
           Type: S3
           Properties:
             Bucket:
@@ -138,22 +138,22 @@ Resources:
             Method: GET
 
 
-  mapgetretriever:
-    Type: 'AWS::Serverless::Function'
-    Properties:
-      Handler: map_get_retriever.lambda_handler
-      Runtime: python3.8
-      CodeUri: functions/map_get_retriever/
-      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
-      Environment:
-        Variables:
-          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
-      Events:
-        Api2:
-          Type: Api
-          Properties:
-            Path: /map
-            Method: GET
+#  mapgetretriever:
+#    Type: 'AWS::Serverless::Function'
+#    Properties:
+#      Handler: map_get_retriever.lambda_handler
+#      Runtime: python3.8
+#      CodeUri: functions/map_get_retriever/
+#      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+#      Environment:
+#        Variables:
+#          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
+#      Events:
+#        Api2:
+#          Type: Api
+#          Properties:
+#            Path: /map
+#            Method: GET
 
   # h5query -> h5extract
   Bucket1:
