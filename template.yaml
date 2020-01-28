@@ -65,9 +65,6 @@ Resources:
       Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
       CodeUri: functions/json2mvt/
       Description: ''
-      Environment:
-        Variables:
-          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
       Layers:
         - !Ref TippeCanoeLayer
       Events:
