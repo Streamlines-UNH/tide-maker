@@ -2,7 +2,6 @@ import json
 import boto3
 import os
 import subprocess
-import mbutil
 
 s3_client = boto3.client("s3")
 
@@ -11,13 +10,11 @@ def gen_mbtiles( infile ):
 
     env["LD_LIBRARY_PATH"] = "/opt/lib"
     process = subprocess.Popen(["/opt/tippecanoe",
-                                "-o", "tmp.mbtiles", "/tmp/" + infile],
+                                "-o", "tmp.mbtiles", "/tmp/", "--nofilesizelimit", "--maximum-zoom=13" ],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                env=env
                                )
-    mbtile = process.communicate()
-    return json.loads(mbtile[0])
 
 def lambda_handler(event, context):
 
@@ -47,16 +44,7 @@ def lambda_handler(event, context):
     Slice MBTile here
     """
 
-    mbutil.mbtiles_to_disk(mbtile, "/tmp/tile/")
-
-    
-
-
-    """
-    Throw MVT's to DynamoDB
-    """
-
     return {
             'statusCode': 200,
-            'body': json.dumps('Hello from Lambda!')
+            'body': json.dumps('Processed GeoJSON to MVT and pushed to Lambda')
            }
