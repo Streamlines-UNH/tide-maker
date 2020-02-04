@@ -17,13 +17,19 @@ s3_client = boto3.client("s3")
 def gen_mbtiles(infile):
     env = os.environ.copy()
 
+    # print("GEN TILE\n")
+
     env["LD_LIBRARY_PATH"] = "/opt/lib"
     process = subprocess.Popen(["/opt/tippecanoe",
-                                "-o", "/tmp/tmp.mbtiles", "/tmp/" + infile, "--nofilesizelimit", "--maximum-zoom=13"],
+                                "-o", "/tmp/" + infile + ".mbtiles", "/tmp/" + infile + ".geojson",
+                                "--maximum-zoom=13"],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                env=env
                                )
+
+    # print(process.communicate())
+    return process
 
 
 def lambda_handler(event, context):
@@ -31,28 +37,33 @@ def lambda_handler(event, context):
     S3 File I/O Here
     REAL I/O
     """
-    infile = event["Records"][0]["s3"]["key"]
+    infile = event["Records"][0]["s3"]["object"]["key"]
     s3_obj = s3_client.get_object(
         Bucket=event["Records"][0]["s3"]["bucket"]["name"],
-        key=infile
+        Key=infile
     )
+
+    data_location = infile.split("/")[0]
+    infile = (infile.replace("/", "")).split(".")[0]
+
+    print("Infile is " + infile)
+
     geoJson = s3_obj["Body"].read()
-    localCache = open("/tmp/" + infile.replace("/", ""), "wb")
+    localCache = open("/tmp/" + infile + ".geojson", "wb")
     localCache.write(geoJson)
     localCache.close()
-    data_location = infile.split("/")[0]
-
 
     '''
     Generate MBTile & store it at: /tmp/tmp.mbtiles
     '''
-    gen_mbtiles(infile.replace("/",""))
+    process = gen_mbtiles(infile)
+    process.wait()
     print("MBTILE Generated")
 
     """
     Slice MBTile here
     """
-    mbtiles_to_disk("/tmp/tmp.mbtiles", data_location)
+    mbtiles_to_disk("/tmp/" + infile + ".mbtiles", data_location)
 
     return {
         'statusCode': 200,

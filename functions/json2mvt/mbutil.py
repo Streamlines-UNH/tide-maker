@@ -37,6 +37,7 @@ def mbtiles_to_disk(mbtiles_file, loc, **kwargs):
     # json.dump(metadata, open(os.path.join(directory_path, 'metadata.json'), 'w'), indent=4)
 
     count = con.execute('select count(zoom_level) from tiles;').fetchone()[0]
+    print(str(count) + " Tiles Generate!\n")
     done = 0
 
     """ADD STYLING LAYER HERE, RESEARCH JSON FORMATTER AND LAYER_JSON"""
@@ -61,10 +62,5 @@ def mbtiles_to_disk(mbtiles_file, loc, **kwargs):
             entry["tile"] = str(t[3])
             batch.put_item(Item=entry)
 
-            # tile_dir = os.path.join(base_path, str(z), str(x))
-            # if not os.path.isdir(tile_dir):
-            #     os.makedirs(tile_dir)
-            # else:
-            #     tile = os.path.join(tile_dir,'%s.%s' % (y, kwargs.get('format', 'png')))
             done += 1
             t = tiles.fetchone()
