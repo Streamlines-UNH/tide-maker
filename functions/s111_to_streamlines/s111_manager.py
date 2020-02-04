@@ -37,6 +37,8 @@ def lambda_handler(event, context):
     streamlines = run_s111(infile, group)
     output = json.dumps(streamlines, indent=4)
 
+
+
     s3.put_object(Bucket=DATA_DEST,
                   Key=outfile,
                   Body=output.encode("utf-8"))
