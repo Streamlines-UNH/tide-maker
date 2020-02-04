@@ -58,6 +58,7 @@ def lambda_handler(event, context):
     '''
     process = gen_mbtiles(infile)
     process.wait()
+    
     print("MBTILE Generated")
 
     """
