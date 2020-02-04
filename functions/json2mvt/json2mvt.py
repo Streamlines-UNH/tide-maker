@@ -34,7 +34,7 @@ def lambda_handler(event, context):
     infile = event["Records"][0]["s3"]["object"]["key"]
     s3_obj = s3_client.get_object(
         Bucket=event["Records"][0]["s3"]["bucket"]["name"],
-        key=infile
+        Key=infile
     )
     geoJson = s3_obj["Body"].read()
     localCache = open("/tmp/" + infile.replace("/", ""), "wb")
@@ -46,7 +46,7 @@ def lambda_handler(event, context):
     '''
     Generate MBTile & store it at: /tmp/tmp.mbtiles
     '''
-    gen_mbtiles(infile.replace("/",""))
+    gen_mbtiles(infile.replace("/", ""))
     print("MBTILE Generated")
 
     """
