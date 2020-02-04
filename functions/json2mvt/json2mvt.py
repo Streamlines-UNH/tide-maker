@@ -31,7 +31,7 @@ def lambda_handler(event, context):
     S3 File I/O Here
     REAL I/O
     """
-    infile = event["Records"][0]["s3"]["key"]
+    infile = event["Records"][0]["s3"]["object"]["key"]
     s3_obj = s3_client.get_object(
         Bucket=event["Records"][0]["s3"]["bucket"]["name"],
         key=infile
