@@ -19,7 +19,7 @@ def gen_mbtiles(infile):
     env = os.environ.copy()
 
     env["LD_LIBRARY_PATH"] = "/opt/lib"
-    process = subprocess.Popen(["/home/mhartman/test/tippecanoe/tippecanoe",
+    process = subprocess.Popen(["/opt/tippecanoe",
                                 "-o", "/tmp/" + infile + ".mbtiles", "/tmp/" + infile + ".geojson",
                                 "--maximum-zoom=14"],
                                stdout=subprocess.PIPE,
