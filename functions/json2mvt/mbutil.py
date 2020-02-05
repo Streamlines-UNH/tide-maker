@@ -2,7 +2,6 @@ import sqlite3
 import sys
 import logging
 import os
-import zlib
 import boto3
 
 """
@@ -33,10 +32,10 @@ def mbtiles_connect(mbtiles_file):
         sys.exit(1)
 
 
-def mbtiles_to_disk(mbtiles_file, loc, **kwargs):
+def mbtiles_to_disk(mbtiles_file, loc, update_time, **kwargs):
     con = mbtiles_connect(mbtiles_file)
 
-    metadata = dict(con.execute('select name, value from metadata;').fetchall())
+    # metadata = dict(con.execute('select name, value from metadata;').fetchall())
     # json.dump(metadata, open(os.path.join(directory_path, 'metadata.json'), 'w'), indent=4)
 
     count = con.execute('select count(zoom_level) from tiles;').fetchone()[0]
@@ -56,13 +55,14 @@ def mbtiles_to_disk(mbtiles_file, loc, **kwargs):
         while t:
             z = t[0]
             x = t[1]
-            y = t[2]
+            y = flip_y(z, t[2])
             """Push T file to DynamoDB"""
             key = str(loc + "-" + str(z) + "-" + str(y) + "-" + str(x))
             entry = {}
             entry["tileKey"] = key
             entry["tile"] = t[3]
             entry["huge"] = len(t[3]) > 400000
+            entry["timestamp"] = update_time
             if not entry["huge"]:
                 batch.put_item(Item=entry)
             else:
