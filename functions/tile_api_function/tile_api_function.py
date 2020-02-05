@@ -10,10 +10,10 @@ TIME_TABLE = dynamodb.Table(os.getenv("TIME_TABLE"))
 
 
 def lambda_handler(event, context):
-    region = event["pathParameters"]["region"] 
+    region = event["pathParameters"]["region"]
     t = event["pathParameters"]["t"]
-    z = event["pathParameters"]["z"],
-    x = event["pathParameters"]["x"],
+    z = event["pathParameters"]["z"]
+    x = event["pathParameters"]["x"]
     y = os.path.splitext(event["pathParameters"]["y"])[0]
     table_index = "{}-{}-{}-{}-{}".format(region, t, z, x, y)
     print(table_index)
