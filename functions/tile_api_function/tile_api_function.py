@@ -1,16 +1,39 @@
 import os
+import boto3
 
+dynamodb = boto3.client('dynamodb')
+s3_client = boto3.client("s3")
+DATA_TABLE = os.getenv('DATA_TABLE')
+DATA_BUCKET = os.getenv('DATA_BUCKET')
 
 def lambda_handler(event, context):
-    # Right now this just returns the datapath of the tile that was
-    # requested as it will be stored in dynamodb
-    table_index = "{}/{}/{}/{}".format(
-        event["pathParameters"]["region"],
-        event["pathParameters"]["z"],
-        event["pathParameters"]["x"],
-        os.path.splitext(event["pathParameters"]["y"])[0]
+    region = event["pathParameters"]["region"] 
+    t = event["pathParameters"]["t"]
+    z = event["pathParameters"]["z"],
+    x = event["pathParameters"]["x"],
+    y = os.path.splitext(event["pathParameters"]["y"])[0]
+    table_index = "{}-{}-{}-{}-{}".format(region, t, z, x, y)
+    res = dynamodb.get_item(
+        TableName=DATA_TABLE,
+        Key={
+            "tileKey": {
+                "S": table_index
+            }
+        }
     )
+    if "Item" not in res:
+        return {
+            'statusCode': 204,
+        }
+    if res["Item"]["huge"]["BOOL"]:
+        s3_obj = s3_client.get_object(
+            Bucket=DATA_BUCKET,
+            Key=table_index
+        )
+        data = s3_obj["Body"].read()
+    else:
+        data = res["Item"]["tile"]["B"]
     return {
         'statusCode': 200,
-        'body': table_index
+        'body': data
     }
