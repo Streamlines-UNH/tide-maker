@@ -68,6 +68,7 @@ Resources:
       Environment:
         Variables:
           DATA_TABLE: !Ref VectorTileBase
+          DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
       Layers:
         - !Ref TippeCanoeLayer
       Events:
@@ -130,11 +131,15 @@ Resources:
       Role: 'arn:aws:iam::958555546010:role/data_etl_lambda_role'
       CodeUri: functions/tile_api_function/
       Description: ''
+      Environment:
+        Variables:
+          DATA_TABLE: !Ref VectorTileBase
+          DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
       Events:
         Api1:
           Type: Api
           Properties:
-            Path: '/api/{region}/{z}/{x}/{y}'
+            Path: '/api/{region}/{t}/{z}/{x}/{y}'
             Method: GET
 
 
@@ -160,6 +165,9 @@ Resources:
     Type: 'AWS::S3::Bucket'
   # streamlinesprocessor -> mapgetretriever
   Bucket2:
+    Type: 'AWS::S3::Bucket'
+  # MVT cache
+  Bucket3:
     Type: 'AWS::S3::Bucket'
   # h5query timestamps
   Table1:

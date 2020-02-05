@@ -1,6 +1,7 @@
 import json
 import boto3
 import os
+import re
 import subprocess
 
 """
@@ -17,18 +18,15 @@ s3_client = boto3.client("s3")
 def gen_mbtiles(infile):
     env = os.environ.copy()
 
-    # print("GEN TILE\n")
-
     env["LD_LIBRARY_PATH"] = "/opt/lib"
-    process = subprocess.Popen(["/opt/tippecanoe",
+    process = subprocess.Popen(["/home/mhartman/test/tippecanoe/tippecanoe",
                                 "-o", "/tmp/" + infile + ".mbtiles", "/tmp/" + infile + ".geojson",
-                                "--maximum-zoom=13"],
+                                "--maximum-zoom=14"],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                env=env
                                )
 
-    # print(process.communicate())
     return process
 
 
@@ -43,10 +41,10 @@ def lambda_handler(event, context):
         Key=infile
     )
 
-    data_location = infile.split("/")[0]
+    data_location = infile.split("/")[0] + "-" + str(int(re.findall(r'\d+', infile)[0]))
     infile = (infile.replace("/", "")).split(".")[0]
 
-    print("Infile is " + infile)
+    print("Infile is " + data_location)
 
     geoJson = s3_obj["Body"].read()
     localCache = open("/tmp/" + infile + ".geojson", "wb")
@@ -58,7 +56,7 @@ def lambda_handler(event, context):
     '''
     process = gen_mbtiles(infile)
     process.wait()
-    
+
     print("MBTILE Generated")
 
     """
