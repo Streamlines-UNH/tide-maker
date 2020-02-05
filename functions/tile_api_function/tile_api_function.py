@@ -2,11 +2,11 @@ import os
 import boto3
 import base64
 
-
 dynamodb = boto3.client('dynamodb')
 s3_client = boto3.client("s3")
 DATA_TABLE = os.getenv('DATA_TABLE')
 DATA_BUCKET = os.getenv('DATA_BUCKET')
+TIME_TABLE = dynamodb.Table(os.getenv("TIME_TABLE"))
 
 
 def lambda_handler(event, context):
@@ -16,6 +16,7 @@ def lambda_handler(event, context):
     x = event["pathParameters"]["x"]
     y = os.path.splitext(event["pathParameters"]["y"])[0]
     table_index = "{}-{}-{}-{}-{}".format(region, t, z, x, y)
+    print(table_index)
     res = dynamodb.get_item(
         TableName=DATA_TABLE,
         Key={
@@ -25,6 +26,14 @@ def lambda_handler(event, context):
         }
     )
     if "Item" not in res:
+        return {
+            'statusCode': 204,
+        }
+    time = dynamodb.get_item(
+        TableName=TIME_TABLE, Key={"dataset": {"S": region}}
+    )
+    if "Item" not in time or (
+            time["Item"]["last_updated"]["String"] != res["Item"]["timestamp"]["String"]):
         return {
             'statusCode': 204,
         }
@@ -40,9 +49,8 @@ def lambda_handler(event, context):
         "isBase64Encoded": True,
         "statusCode": 200,
         "headers": {
-            "content-type": "application/x-protobuf",
-            "content-encoding": "gzip",
+            "Content-Type": "application/x-protobuf",
+            "Content-Encoding": "gzip",
         },
         "body":  base64.b64encode(data).decode("utf-8"),
-        "Access-Control-Allow-Origin": "*"
     }

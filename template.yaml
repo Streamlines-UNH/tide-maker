@@ -69,6 +69,7 @@ Resources:
         Variables:
           DATA_TABLE: !Ref VectorTileBase
           DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
+          TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
       Layers:
         - !Ref TippeCanoeLayer
       Events:
@@ -134,6 +135,7 @@ Resources:
       Environment:
         Variables:
           DATA_TABLE: !Ref VectorTileBase
+          TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
           DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
       Events:
         Api1:
