@@ -56,6 +56,31 @@ Resources:
           Properties:
             Schedule: cron(0 * ? * * *)
 
+
+  json2mvt:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: json2mvt.lambda_handler
+      Runtime: python3.7
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      CodeUri: functions/json2mvt/
+      Description: ''
+      Environment:
+        Variables:
+          DATA_TABLE: !Ref VectorTileBase
+          DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
+          TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
+      Layers:
+        - !Ref TippeCanoeLayer
+      Events:
+        BucketEvent2:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: Bucket2
+            Events:
+              - 's3:ObjectCreated:*'
+
   h5extract:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -107,36 +132,44 @@ Resources:
       Role: 'arn:aws:iam::958555546010:role/data_etl_lambda_role'
       CodeUri: functions/tile_api_function/
       Description: ''
+      Environment:
+        Variables:
+          DATA_TABLE: !Ref VectorTileBase
+          TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
+          DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
       Events:
         Api1:
           Type: Api
           Properties:
-            Path: '/api/{region}/{z}/{x}/{y}'
+            Path: '/api/{region}/{t}/{z}/{x}/{y}'
             Method: GET
 
 
-  mapgetretriever:
-    Type: 'AWS::Serverless::Function'
-    Properties:
-      Handler: map_get_retriever.lambda_handler
-      Runtime: python3.8
-      CodeUri: functions/map_get_retriever/
-      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
-      Environment:
-        Variables:
-          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
-      Events:
-        Api2:
-          Type: Api
-          Properties:
-            Path: /map
-            Method: GET
+#  mapgetretriever:
+#    Type: 'AWS::Serverless::Function'
+#    Properties:
+#      Handler: map_get_retriever.lambda_handler
+#      Runtime: python3.8
+#      CodeUri: functions/map_get_retriever/
+#      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+#      Environment:
+#        Variables:
+#          DATA_SRC: !Select [1, !Split [":::", !GetAtt Bucket2.Arn]]
+#      Events:
+#        Api2:
+#          Type: Api
+#          Properties:
+#            Path: /map
+#            Method: GET
 
   # h5query -> h5extract
   Bucket1:
     Type: 'AWS::S3::Bucket'
   # streamlinesprocessor -> mapgetretriever
   Bucket2:
+    Type: 'AWS::S3::Bucket'
+  # MVT cache
+  Bucket3:
     Type: 'AWS::S3::Bucket'
   # h5query timestamps
   Table1:
@@ -148,11 +181,21 @@ Resources:
       KeySchema:
         - AttributeName: dataset
           KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+      BillingMode: PAY_PER_REQUEST
       StreamSpecification:
         StreamViewType: NEW_IMAGE
+
+  #Vector Tile Table
+  VectorTileBase:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "tileKey"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "tileKey"
+          KeyType: "HASH"
   # streamlinesprocessor trigger
   SNSTopic1:
     Type: 'AWS::SNS::Topic'
