@@ -6,7 +6,7 @@ dynamodb = boto3.client('dynamodb')
 s3_client = boto3.client("s3")
 DATA_TABLE = os.getenv('DATA_TABLE')
 DATA_BUCKET = os.getenv('DATA_BUCKET')
-TIME_TABLE = dynamodb.Table(os.getenv("TIME_TABLE"))
+TIME_TABLE = os.getenv("TIME_TABLE")
 
 
 def lambda_handler(event, context):
@@ -33,7 +33,7 @@ def lambda_handler(event, context):
         TableName=TIME_TABLE, Key={"dataset": {"S": region}}
     )
     if "Item" not in time or (
-            time["Item"]["last_updated"]["String"] != res["Item"]["timestamp"]["String"]):
+            time["Item"]["last_updated"]["S"] != res["Item"]["timestamp"]["S"]):
         return {
             'statusCode': 204,
         }

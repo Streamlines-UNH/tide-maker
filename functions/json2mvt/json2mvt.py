@@ -13,8 +13,8 @@ Modified into a cloud-native SQL Egress via Lambda to AWS DynamoDB
 from mbutil import mbtiles_to_disk
 
 s3_client = boto3.client("s3")
-dynamodb = boto3.resource("dynamodb")
-TIME_TABLE = dynamodb.Table(os.getenv("TIME_TABLE"))
+dynamodb = boto3.client("dynamodb")
+TIME_TABLE = os.getenv("TIME_TABLE")
 
 
 def gen_mbtiles(infile):

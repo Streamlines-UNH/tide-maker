@@ -57,7 +57,7 @@ def mbtiles_to_disk(mbtiles_file, loc, update_time, **kwargs):
             x = t[1]
             y = flip_y(z, t[2])
             """Push T file to DynamoDB"""
-            key = str(loc + "-" + str(z) + "-" + str(y) + "-" + str(x))
+            key = str(loc + "-" + str(z) + "-" + str(x) + "-" + str(y))
             entry = {}
             entry["tileKey"] = key
             entry["tile"] = t[3]
