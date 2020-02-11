@@ -11,20 +11,19 @@ Globals:
     MemorySize: 512
 
 Resources:
-  """
-  Serverless Lambda Layers:
 
-  H5Layer:
-  - Libraries and required dependencies to work with H5 formatted data
-
-  StreamlineCpp:
-  - Contains binaries and all dependent libraries to run Roland's Code
-  - Execute Randomly seeded Jobard-Lefer streamline drawing algorithms
-
-  TippeCanoeLayer:
-  - Compiled binary (lambda executable) of Mapbox/Tippecanoe
-  -Allows conversion of GeoJSON to MBTiles files (SQLite DB of VectorTiles)
-  """
+#  Serverless Lambda Layers:
+#
+#  H5Layer:
+#  - Libraries and required dependencies to work with H5 formatted data
+#
+#  StreamlineCpp:
+#  - Contains binaries and all dependent libraries to run Roland's Code
+#  - Execute Randomly seeded Jobard-Lefer streamline drawing algorithms
+#
+#  TippeCanoeLayer:
+#  - Compiled binary (lambda executable) of Mapbox/Tippecanoe
+#  -Allows conversion of GeoJSON to MBTiles files (SQLite DB of VectorTiles)
   H5Layer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -51,12 +50,12 @@ Resources:
       CompatibleRuntimes:
         - python3.7
 
-  """
-  Serverless Lambda Function
 
-  Retrieves data from NOAA FTP server and stores.
-  Triggered on CRON schedule, and posts raw data to Bucket1
-  """
+#  Serverless Lambda Function
+#
+#  Retrieves data from NOAA FTP server and stores.
+#  Triggered on CRON schedule, and posts raw data to Bucket1
+
   h5query:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -76,12 +75,11 @@ Resources:
             Schedule: cron(0 * ? * * *)
 
 
-  """
-  Serverless Lambda Function
 
-  Converts GeoJSON to Vector Tiles
-  Retrieve Data from Bucket2 and writes vector tiles to VectorTileBase (DynamoDB)
-  """
+#  Serverless Lambda Function
+#
+#  Converts GeoJSON to Vector Tiles
+#  Retrieve Data from Bucket2 and writes vector tiles to VectorTileBase (DynamoDB)
   json2mvt:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -107,12 +105,11 @@ Resources:
               - 's3:ObjectCreated:*'
 
 
-  """
-  Serverless Lambda Function
 
-  Extracts H5 data from raw NOAA FTP data
-  Triggers/Retrieves data from Bucket1 and posts messages to SNS topic
-  """
+#  Serverless Lambda Function
+#
+#  Extracts H5 data from raw NOAA FTP data
+#  Triggers/Retrieves data from Bucket1 and posts messages to SNS topic
   h5extract:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -135,12 +132,10 @@ Resources:
             Events:
               - 's3:ObjectCreated:*'
 
-  """
-  Serverless Lambda Function
-
-  Takes in S111 data and generates GeoJSON formatted streamlines
-  Retrieve Data/Trigger via SNS topic message and posts to Bucket2
-  """
+#  Serverless Lambda Function
+#
+#  Takes in S111 data and generates GeoJSON formatted streamlines
+#  Retrieve Data/Trigger via SNS topic message and posts to Bucket2
   streamlinesprocessor:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -162,12 +157,11 @@ Resources:
             Topic:
               Ref: SNSTopic1
 
-  """
-  Fully defined API & LambdaFunction to allow USERS to retrieve VECTOR TILE (*.pbf)
-  files on request based on a delivered path of /api/{region}/{time}/{z}/{x}/{y}
 
-  CORS not currently enabled, disable browser CORS to use in this iteration.
-  """
+#  Fully defined API & LambdaFunction to allow USERS to retrieve VECTOR TILE (*.pbf)
+#  files on request based on a delivered path of /api/{region}/{time}/{z}/{x}/{y}
+#
+#  CORS not currently enabled, disable browser CORS to use in this iteration.
   tileapifunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -189,43 +183,37 @@ Resources:
             Method: GET
 
 
-  """
-  h5query -> h5extract
 
-  Interim storage for H5/S111 files to be extracted out into the correct processable
-  data typing.
-  """
+#  h5query -> h5extract
+#
+#  Interim storage for H5/S111 files to be extracted out into the correct processable
+#  data typing.
   Bucket1:
     Type: 'AWS::S3::Bucket'
 
-  """
-  streamlinesprocessor -> JSON2MVT
-
-  Interim Storage for processed streamlines (GeoJSON) output from
-  Roland's compiled binary
-  """
+#  streamlinesprocessor -> JSON2MVT
+#
+#  Interim Storage for processed streamlines (GeoJSON) output from
+#  Roland's compiled binary
   Bucket2:
     Type: 'AWS::S3::Bucket'
 
-  """
-  MVT cache
-
-  DynamoDB functions with a maximum tuple size of 400KB
-  Some (High-Level) vector tiles are larger than this size.
-  This bucket allows for a 'large-format' storage for the larger files.
-    - Slower than DynamoDB
-    - More expensive R/W than serverless DB
-    - Required due to DDB file size restrictions
-  """
+#  MVT cache
+#
+#  DynamoDB functions with a maximum tuple size of 400KB
+#  Some (High-Level) vector tiles are larger than this size.
+#  This bucket allows for a 'large-format' storage for the larger files.
+#    - Slower than DynamoDB
+#    - More expensive R/W than serverless DB
+#    - Required due to DDB file size restrictions
   Bucket3:
     Type: 'AWS::S3::Bucket'
 
-  """
-  h5query timestamps
 
-  This DB stores truth values for succcesful reads to NOAA FTP Server.
-  It allows us to execute requests and determine which data we have already retrieved.
-  """
+#  h5query timestamps
+#
+#  This DB stores truth values for succcesful reads to NOAA FTP Server.
+#  It allows us to execute requests and determine which data we have already retrieved.
   Table1:
     Type: 'AWS::DynamoDB::Table'
     Properties:
@@ -239,11 +227,9 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_IMAGE
 
-  """
-  Vector Tile Table. Stores data in K-V pairs
-  KEY: {Time}-{Location}-{Z}-{X}-{Y}
-  VALUE: Vector Tile representative of that location and time estimate
-  """
+#  Vector Tile Table. Stores data in K-V pairs
+#  KEY: {Time}-{Location}-{Z}-{X}-{Y}
+#  VALUE: Vector Tile representative of that location and time estimate
   VectorTileBase:
     Type: 'AWS::DynamoDB::Table'
     Properties:
@@ -255,12 +241,10 @@ Resources:
         - AttributeName: "tileKey"
           KeyType: "HASH"
 
-  """
-  streamlinesprocessor trigger
-
-  This trigger allows streamlines processor to gather all the data it needs from a bucket.
-  It triggers off of an SNS message rather than a file upload!
-  Good reference to understand this process would be event-driven code
-  """
+#  streamlinesprocessor trigger
+#
+#  This trigger allows streamlines processor to gather all the data it needs from a bucket.
+#  It triggers off of an SNS message rather than a file upload!
+#  Good reference to understand this process would be event-driven code
   SNSTopic1:
     Type: 'AWS::SNS::Topic'
