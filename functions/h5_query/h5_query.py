@@ -1,5 +1,5 @@
 from ftplib import FTP
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.parser import parse
 import re
 import io
@@ -8,8 +8,10 @@ import boto3
 
 DATA_BUCKET = os.getenv('DATA_BUCKET')
 TIME_TABLE = os.getenv('TIME_TABLE')
-TODAY = datetime.today().strftime('%Y%m%d')
-TODAY_F = datetime.today().strftime('%Y-%m-%d')
+TZ_OFF = timedelta(hours=5)
+NOW = datetime.today()-TZ_OFF
+TODAY = NOW.strftime('%Y%m%d')
+TODAY_F = NOW.strftime('%Y-%m-%d')
 BASE_DIR = "OFS_Data/"+TODAY+"/HDF5/S111_1.0.0"
 FILE_RE = re.compile(
     r".*((\d\d:\d\d)(AM|PM))[\ 0-9A-Z_]*Z_(.*)_TYP2(_PACIFIC|_ATLANTIC)?\.h5"
@@ -53,6 +55,7 @@ def get_lastest():
             refresh = ("Item" not in response or
                        float(response["Item"]["last_updated"]["S"]) < data_time.timestamp())
             if refresh:
+                print("Updating:", data_short)
                 data = io.BytesIO()
                 ftp.retrbinary(
                     'RETR %s/%s' % (region, x.split(" ")[-1]),
