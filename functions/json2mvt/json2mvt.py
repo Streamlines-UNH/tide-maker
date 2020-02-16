@@ -10,7 +10,7 @@ Python TippeCanoe binary wrapper.
 Modified into a cloud-native SQL Egress via Lambda to AWS DynamoDB
 """
 
-from mbutil import mbtiles_to_disk
+from mbutil import mbtiles_to_disk, to_geo
 
 s3_client = boto3.client("s3")
 dynamodb = boto3.client("dynamodb")
@@ -53,9 +53,9 @@ def lambda_handler(event, context):
 
     print("Infile is " + data_location + "-" + str(int(re.findall(r"\d+", infile)[0])))
 
-    geoJson = s3_obj["Body"].read()
+    geoJson = to_geo(json.loads(s3_obj["Body"].read()))
     localCache = open("/tmp/" + infile + ".geojson", "wb")
-    localCache.write(geoJson)
+    localCache.write(json.dumps(geoJson))
     localCache.close()
 
     """
