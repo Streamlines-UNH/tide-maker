@@ -26,3 +26,4 @@ jobs:
       run: |
         pip install cfn-lint
         cfn-lint --template template.yaml --region us-east-1 --ignore-checks W
+        
