@@ -248,3 +248,36 @@ Resources:
 #  Good reference to understand this process would be event-driven code
   SNSTopic1:
     Type: 'AWS::SNS::Topic'
+
+# CloudWatchAlarms SNS Topic
+# Users to message on Alarm's built in CW
+#
+  AlarmTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      Subscription:
+        - 'jeffjnh@gmail.com'
+        - 'msh1011@wildcats.unh.edu'
+
+# Alarm for Failure on BatchWrite
+#
+# Triggers AlarmTopic
+#   - Emails Jeff, Matt about problem
+  Write-Fail-Alarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      ActionsEnabled: "true"
+      ComparisonOperator: "GreaterThanThreshold"
+      EvaluationPeriods: "1"
+      MetricName: "SuccessfulRequestLatency"
+      Namespace: "AWS/DynamoDB"
+      Period: "300"
+      Statistic: "Average"
+      Threshold: "5000.0"
+      AlarmActions:
+        - !Ref AlarmTopic
+      Dimensions:
+        - Name: 'TableName'
+          Value: !Ref VectorTileBase
+        - Name: 'Operation'
+          Value: 'BatchWriteItem'
