@@ -256,24 +256,26 @@ Resources:
     Type: 'AWS::SNS::Topic'
     Properties:
       Subscription:
-        - 'jeffjnh@gmail.com'
-        - 'msh1011@wildcats.unh.edu'
+        - Endpoint: 'jeffjnh@gmail.com'
+          Protocol: 'email'
+        - Endpoint: 'msh1011@wildcats.unh.edu'
+          Protocol: 'email'
 
 # Alarm for Failure on BatchWrite
 #
 # Triggers AlarmTopic
 #   - Emails Jeff, Matt about problem
-  Write-Fail-Alarm:
+  WriteFailAlarm:
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
-      ActionsEnabled: "true"
+      ActionsEnabled: true
       ComparisonOperator: "GreaterThanThreshold"
-      EvaluationPeriods: "1"
+      EvaluationPeriods: 1
       MetricName: "SuccessfulRequestLatency"
       Namespace: "AWS/DynamoDB"
-      Period: "300"
+      Period: 300
       Statistic: "Average"
-      Threshold: "5000.0"
+      Threshold: 5000.0
       AlarmActions:
         - !Ref AlarmTopic
       Dimensions:
