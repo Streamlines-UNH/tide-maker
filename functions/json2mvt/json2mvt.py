@@ -29,6 +29,8 @@ def gen_mbtiles(infile):
             "/tmp/" + infile + ".geojson",
             "--maximum-zoom=14",
             "-pk",
+            "-pc",
+            "-pD",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
