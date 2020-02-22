@@ -29,6 +29,8 @@ def gen_mbtiles(infile):
             "/tmp/" + infile + ".geojson",
             "--maximum-zoom=14",
             "-pk",
+            "-pc",
+            "-pD",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -53,9 +55,9 @@ def lambda_handler(event, context):
 
     print("Infile is " + data_location + "-" + str(int(re.findall(r"\d+", infile)[0])))
 
-    geoJson = to_geo(json.loads(s3_obj["Body"].read()))
+    geoJson = s3_obj["Body"].read()
     localCache = open("/tmp/" + infile + ".geojson", "wb")
-    localCache.write(json.dumps(geoJson))
+    localCache.write(geoJson)
     localCache.close()
 
     """
