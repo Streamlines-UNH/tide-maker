@@ -283,3 +283,15 @@ Resources:
           Value: !Ref VectorTileBase
         - Name: 'Operation'
           Value: 'BatchWriteItem'
+
+
+
+  DashboardMonitor:
+    Type: 'AWS::CloudWatch::Dashboard'
+    Properties:
+      DashboardBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./metrics/dash.json
+      DashboardName: 'OceansServerless-Drill-Down'
