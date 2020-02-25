@@ -50,6 +50,19 @@ Resources:
       CompatibleRuntimes:
         - python3.7
 
+# Define our API gateway for later reference
+  AWSApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: Basic AWS Api Gateway
+      StageName: prod
+      Cors: "'*'"
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./swagger.yaml
+
 
 #  Serverless Lambda Function
 #
@@ -167,21 +180,43 @@ Resources:
     Properties:
       Handler: tile_api_function.lambda_handler
       Runtime: python3.7
-      Role: 'arn:aws:iam::958555546010:role/data_etl_lambda_role'
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
       CodeUri: functions/tile_api_function/
-      Description: ''
       Environment:
         Variables:
           DATA_TABLE: !Ref VectorTileBase
           TIME_TABLE: !Select [1, !Split ["/", !GetAtt Table1.Arn]]
           DATA_BUCKET: !Select [1, !Split [":::", !GetAtt Bucket3.Arn]]
+      Description: >
+          API-Gateway endpoint for MVT tile layers. A Vector tile client Given this URL
+          https://site.com/Prod/api/CBOFS/{z}/{x}/{y}.pbf
+          should display the streamline data
+          gathered by the Chesapeake Bay Operational Forecast System.
       Events:
         Api1:
           Type: Api
           Properties:
             Path: '/api/{region}/{t}/{z}/{x}/{y}'
+            RestApiId: !Ref AWSApiGateway
             Method: GET
 
+  tileapiinfo:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: tile_api_info.lambda_handler
+      Runtime: python3.7
+      Role: 'arn:aws:iam::958555546010:role/lambda-access-role'
+      CodeUri: functions/tile_api_info/
+      Description: >
+          Static endpoint that outlines the various data sources
+          returns JSON array of objects describing each location's min/max zoom levels, location, name and URL
+      Events:
+        Api1:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AWSApiGateway
+            Path: '/api/regions'
+            Method: GET
 
 
 #  h5query -> h5extract
@@ -283,3 +318,8 @@ Resources:
           Value: !Ref VectorTileBase
         - Name: 'Operation'
           Value: 'BatchWriteItem'
+
+Outputs:
+  AWSApiGateway:
+    Description: 'API Gateway endpoint URL for Staging stage for Hello World function'
+    Value: !Sub 'https://${AWSApiGateway}.execute-api.${AWS::Region}.amazonaws.com/'
