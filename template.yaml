@@ -50,6 +50,19 @@ Resources:
       CompatibleRuntimes:
         - python3.7
 
+# Define our API gateway for later reference
+  AWSApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: Basic AWS Api Gateway
+      StageName: prod
+      Cors: "'*'"
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./swagger.yaml
+
 
 #  Serverless Lambda Function
 #
@@ -180,6 +193,7 @@ Resources:
           Type: Api
           Properties:
             Path: '/api/{region}/{t}/{z}/{x}/{y}'
+            RestApiId: !Ref AWSApiGateway
             Method: GET
 
 
