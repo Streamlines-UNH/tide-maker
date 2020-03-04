@@ -28,6 +28,12 @@ def lambda_handler(event, context):
     if "Item" not in res:
         return {
             'statusCode': 204,
+            "headers": {
+                "Content-Type": "application/x-protobuf",
+                "Content-Encoding": "gzip",
+                "Access-Control-Allow-Origin": "*",
+            }
+
         }
     time = dynamodb.get_item(
         TableName=TIME_TABLE, Key={"dataset": {"S": region}}
@@ -36,6 +42,11 @@ def lambda_handler(event, context):
             time["Item"]["last_updated"]["S"] != res["Item"]["timestamp"]["S"]):
         return {
             'statusCode': 204,
+            "headers": {
+                "Content-Type": "application/x-protobuf",
+                "Access-Control-Allow-Origin": "*",
+                "Content-Encoding": "gzip",
+            }
         }
     if res["Item"]["huge"]["BOOL"]:
         s3_obj = s3_client.get_object(
@@ -51,6 +62,7 @@ def lambda_handler(event, context):
         "headers": {
             "Content-Type": "application/x-protobuf",
             "Content-Encoding": "gzip",
+            "Access-Control-Allow-Origin": "*",
         },
         "body":  base64.b64encode(data).decode("utf-8"),
     }
