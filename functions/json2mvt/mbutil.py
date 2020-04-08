@@ -12,12 +12,12 @@ Code Adapted from MBUTIL
 Modified into a cloud-native SQL Egress via Lambda to AWS DynamoDB
 """
 
-#dynamodb = boto3.resource("dynamodb")
-#dynamodb_table = dynamodb.Table(os.getenv("DATA_TABLE"))
-#huge_bucket = os.getenv("DATA_BUCKET")
-#s3 = boto3.client("s3")
-#
-#logger = logging.getLogger(__name__)
+dynamodb = boto3.resource("dynamodb")
+dynamodb_table = dynamodb.Table(os.getenv("DATA_TABLE"))
+huge_bucket = os.getenv("DATA_BUCKET")
+s3 = boto3.client("s3")
+
+logger = logging.getLogger(__name__)
 
 
 def flip_y(zoom, y):
@@ -127,10 +127,3 @@ def json_filter(obj):
         feat["geometry"]["properties"] = nProps
         new_obj["features"].append(feat)
     return new_obj
-
-
-with open("test.geojson") as i:
-    data = json.loads(i.read())
-    data1 = json_filter(data)
-    with open("test1.geojson", "w") as o:
-        o.write(json.dumps(data1, indent=4))
