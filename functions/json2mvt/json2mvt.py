@@ -19,6 +19,14 @@ TIME_TABLE = os.getenv("TIME_TABLE")
 
 def gen_mbtiles(infile):
     env = os.environ.copy()
+    max_zoom = 12
+    min_zoom = 4
+    if "NYOFS" in infile:
+        max_zoom = 18
+        min_zoom = 4
+    if "RTOFS" in infile:
+        max_zoom = 10
+        min_zoom = 3
 
     env["LD_LIBRARY_PATH"] = "/opt/lib"
     process = subprocess.Popen(
@@ -27,7 +35,8 @@ def gen_mbtiles(infile):
             "-o",
             "/tmp/" + infile + ".mbtiles",
             "/tmp/" + infile + ".geojson",
-            "--maximum-zoom=14",
+            "--maximum-zoom={}".format(max_zoom),
+            "--minimum-zoom={}".format(min_zoom),
             "-pk",
             "-pc",
             "-pD",
