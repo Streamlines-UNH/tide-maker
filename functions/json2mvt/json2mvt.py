@@ -27,7 +27,10 @@ def gen_mbtiles(infile):
             "-o",
             "/tmp/" + infile + ".mbtiles",
             "/tmp/" + infile + ".geojson",
-            "--maximum-zoom=14 -pk",
+            "--maximum-zoom=14",
+            "-pk",
+            "-pc",
+            "-pD",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -79,6 +82,16 @@ def lambda_handler(event, context):
         data_location + "-" + str(int(re.findall(r"\d+", infile)[0])),
         response["Item"]["last_updated"]["S"],
     )
+    # In testing Lambda disk was full when this function was slammed
+    # /tmp acks as a temporary cache between invocations so
+    # we should cleanup a bit
+    try: 
+        os.remove("/tmp/" + infile + ".mbtiles") 
+        os.remove("/tmp/" + infile + ".geojson") 
+    except OSError as error:
+        # we dont realy need to care if this fails 
+        pass
+
 
     return {
         "statusCode": 200,
